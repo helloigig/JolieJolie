@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jolie Jolie</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Times New Roman', Times, serif;
+            overflow: hidden;
+            color: #7C47E0;
+        }
+        #datetime {
+            width: 100%;
+            text-align: center;
+            padding: 20px 0;
+            font-size: 18vw; /* Responsive font size */
+            font-style: italic;
+            opacity: 0.1;
+        }
+        #logo-container {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 20px;
+        }
+        #logo {
+            width: 60px;
+            height: auto;
+            position: fixed;
+            top: 10px;
+            left: 10px;
+        }
+        #click-me {
+            margin-bottom: 10px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        #image-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        #start-image {
+            width: 150px;
+            height: auto;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-30px);
+            }
+            60% {
+                transform: translateY(-15px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="datetime"></div>
+    <div id="image-container"></div>
+    <div id="logo-container">
+        <div id="click-me">click me</div>
+        <img id="start-image" src="assets/image25.png" alt="Start Image">
+    </div>
+    <img id="logo" src="assets/logo.svg" alt="Logo">
+
+    <script>
+        function updateDateTime() {
+            const now = new Date();
+            const options = { timeZone: 'Australia/Sydney', hour: '2-digit', minute: '2-digit', hour12: false };
+            const timeFormatter = new Intl.DateTimeFormat('en-US', options);
+            const timeParts = timeFormatter.formatToParts(now);
+            
+            const hours = timeParts.find(part => part.type === 'hour').value;
+            const minutes = timeParts.find(part => part.type === 'minute').value;
+            
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const month = months[now.getMonth()];
+            const day = now.getDate();
+            
+            const formattedDate = `${hours}:${minutes} ${month} ${day}`;
+            document.getElementById('datetime').textContent = formattedDate;
+        }
+
+        updateDateTime();
+        setInterval(updateDateTime, 60000); // Update every minute
+
+        const imageContainer = document.getElementById('image-container');
+        const clickMe = document.getElementById('click-me');
+        const startImage = document.getElementById('start-image');
+        const logo = document.getElementById('logo');
+        const images = [];
+
+        // Attempt to load all images from assets folder
+        for (let i = 1; i <= 20; i++) {  // Assuming there are up to 20 images
+            images.push(`assets/image${i}.png`);
+        }
+
+        // Function to preload images and remove non-existent ones
+        function preloadImages(srcs) {
+            return srcs.map(src => new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(src);
+                img.onerror = () => reject(src);
+                img.src = src;
+            }));
+        }
+
+        // Preload images and filter out non-existent ones
+        Promise.allSettled(preloadImages(images))
+            .then(results => {
+                images.length = 0;  // Clear the array
+                results.forEach(result => {
+                    if (result.status === 'fulfilled') {
+                        images.push(result.value);
+                    }
+                });
+            });
+
+        function animateImages() {
+            imageContainer.innerHTML = '';
+
+            // Use startImage as the starting point
+            const startX = startImage.getBoundingClientRect().left + startImage.width / 2;
+            const startY = startImage.getBoundingClientRect().top;
+
+            // Calculate the available space
+            const maxHeight = startY - 50; // 50px from the top of the screen
+            const minHeight = 120; // Height of the footer
+
+            // Determine if it's a mobile device
+            const isMobile = window.innerWidth <= 768;
+
+            // Shuffle and slice the images array to get 5 or 10 random images based on device type
+            const randomImages = images.sort(() => 0.5 - Math.random()).slice(0, isMobile ? 5 : 10);
+
+            const occupiedSpaces = [];
+
+            randomImages.forEach((image) => {
+                const element = document.createElement('img');
+                element.src = image;
+                element.style.position = 'absolute';
+                element.style.left = `${startX}px`;
+                element.style.top = `${startY}px`;
+                element.style.cursor = 'pointer';
+                element.style.opacity = '0';
+                element.style.transition = 'opacity 0.5s';
+                
+                // Adjust image size based on device type
+                if (isMobile) {
+                    element.style.width = `${Math.random() * 60 + 140}px`; // Random size between 140px and 200px for mobile
+                } else {
+                    element.style.width = `${Math.random() * 20 + 160}px`; // Random size between 160px and 180px for desktop
+                }
+                
+                element.style.height = 'auto';
+                imageContainer.appendChild(element);
+
+                let endX, endY;
+                let attempts = 0;
+                const maxAttempts = 10;
+
+                do {
+                    // Calculate end position
+                    const angle = (Math.random() * 0.5 + 0.25) * Math.PI; // 45 to 135 degrees (upwards)
+                    const distance = isMobile ? 
+                        Math.random() * (maxHeight - minHeight) * 0.7 + minHeight : // Reduced distance for mobile
+                        Math.random() * (maxHeight - minHeight) + minHeight;
+                    
+                    // Adjust spread based on device type
+                    const horizontalSpread = isMobile ? 0.8 : 1.5; // Reduce horizontal spread for mobile
+                    const verticalSpread = isMobile ? 1.2 : 1; // Slightly increase vertical spread for mobile
+                    
+                    endX = startX + Math.cos(angle) * distance * horizontalSpread;
+                    endY = startY - Math.sin(angle) * distance * verticalSpread;
+
+                    // Ensure the item doesn't go off-screen
+                    const maxWidth = window.innerWidth - element.offsetWidth;
+                    const maxTop = window.innerHeight - element.offsetHeight - minHeight;
+                    endX = Math.max(0, Math.min(endX, maxWidth));
+                    endY = Math.max(0, Math.min(endY, maxTop));
+
+                    attempts++;
+                } while (isOverlapping(endX, endY, element.offsetWidth, element.offsetHeight, occupiedSpaces) && attempts < maxAttempts);
+
+                occupiedSpaces.push({x: endX, y: endY, width: element.offsetWidth, height: element.offsetHeight});
+
+                // Animate the item
+                element.animate([
+                    { left: `${startX}px`, top: `${startY}px`, opacity: 0 },
+                    { left: `${endX}px`, top: `${endY}px`, opacity: 1 }
+                ], {
+                    duration: 800 + Math.random() * 400, // Random duration between 800ms and 1200ms
+                    easing: 'cubic-bezier(0.17, 0.84, 0.44, 1)',
+                    fill: 'forwards'
+                });
+
+                // Add hover effect
+                element.addEventListener('mouseover', function() {
+                    this.style.transform = 'scale(1.1)';
+                    this.style.transition = 'transform 0.3s';
+                });
+
+                element.addEventListener('mouseout', function() {
+                    this.style.transform = 'scale(1)';
+                });
+            });
+        }
+
+        function isOverlapping(x, y, width, height, occupiedSpaces) {
+            for (let space of occupiedSpaces) {
+                if (x < space.x + space.width &&
+                    x + width > space.x &&
+                    y < space.y + space.height &&
+                    y + height > space.y) {
+                    return true; // Overlapping
+                }
+            }
+            return false; // Not overlapping
+        }
+
+        clickMe.addEventListener('click', animateImages);
+        startImage.addEventListener('click', animateImages);
+    </script>
+</body>
+</html>
