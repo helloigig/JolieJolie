@@ -162,7 +162,7 @@
                 
                 // Adjust image size based on device type
                 if (isMobile) {
-                    element.style.width = `${Math.random() * 60 + 140}px`; // Random size between 140px and 200px for mobile
+                    element.style.width = `${Math.random() * 60 + 120}px`; // Random size between 140px and 200px for mobile
                 } else {
                     element.style.width = `${Math.random() * 20 + 160}px`; // Random size between 160px and 180px for desktop
                 }
@@ -178,12 +178,12 @@
                     // Calculate end position
                     const angle = (Math.random() * 0.5 + 0.25) * Math.PI; // 45 to 135 degrees (upwards)
                     const distance = isMobile ? 
-                        Math.random() * (maxHeight - minHeight) * 0.7 + minHeight : // Reduced distance for mobile
+                        Math.random() * (maxHeight - minHeight) * 0.9 + minHeight : // Reduced distance for mobile
                         Math.random() * (maxHeight - minHeight) + minHeight;
                     
                     // Adjust spread based on device type
                     const horizontalSpread = isMobile ? 0.8 : 1.5; // Reduce horizontal spread for mobile
-                    const verticalSpread = isMobile ? 1.2 : 1; // Slightly increase vertical spread for mobile
+                    const verticalSpread = isMobile ? 1.3 : 1; // Slightly increase vertical spread for mobile
                     
                     endX = startX + Math.cos(angle) * distance * horizontalSpread;
                     endY = startY - Math.sin(angle) * distance * verticalSpread;
